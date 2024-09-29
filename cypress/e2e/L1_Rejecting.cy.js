@@ -1,0 +1,87 @@
+describe('Combined Cypress Tests', () => {
+  beforeEach(() => {
+    // Read the Excel file and store data in a Cypress alias
+    cy.task('readExcelFile', { filePath: '/home/ajaykumar/Documents/test_data.xlsx' }).then((data) => {
+      cy.wrap(data).as('testData');
+    });
+  });
+
+
+  // The remaining six 'it' blocks will include the utility functions:
+
+  // Utility functions defined once
+  function getUserCredentialsByEmail(email, testData) {
+    for (let i = 0; i < testData.length; i++) {
+      if (['Email1', 'Email2', 'Email3'].includes(testData[i].Field) && testData[i].Value === email) {
+        return {
+          email: testData[i].Value,
+          password: testData[i + 1].Value, // Assuming the password is next to the email in the test data
+        };
+      }
+    }
+    return null; // Return null if the email is not found
+  }
+
+  function getValueByField(field, testData) {
+    const fieldData = testData.find((item) => item.Field === field);
+    return fieldData ? fieldData.Value : null;
+  }
+
+
+
+
+  it('If condition true rejected by L1', function () {
+    const providedEmail = 'lenstester@lmnas.com'; // Define the email to be used for login (can be dynamic)
+
+    // Fetch the URL from test data
+    const siteURL = getValueByField('URL', this.testData);
+    
+    if (!siteURL) {
+      throw new Error('URL not found in the provided test data');
+    }
+
+    // Fetch credentials based on the provided email
+    const userCredentials = getUserCredentialsByEmail(providedEmail, this.testData);
+    if (!userCredentials) {
+      throw new Error('Email not found in the provided test data');
+    }
+
+    // Login using fetched credentials
+    cy.visit(siteURL); // Use the fetched URL from the Excel file
+
+    // Perform login
+    cy.get('#login_email').click().type(userCredentials.email, { force: true });
+    cy.get('#login_password').click().type(userCredentials.password, { force: true });
+    cy.get('.for-login > .login-content > .form-signin > .page-card-actions > .btn').click();
+
+    // Perform post-login actions or verifications as needed
+    cy.wait(2000); // Adjust waiting time if needed
+
+
+    // Rejecting 
+     cy.get('[item-name="Offer"] > .desk-sidebar-item > .item-anchor').click();
+     cy.get('[shortcut_name="Quotations"] > .widget').click()
+     cy.get('[href="/app/quotation"]').click();
+     //cy.get('.filter-selector > .btn-group > .btn-default').click()
+     cy.get('#navbar-breadcrumbs > :nth-child(2) > a').click();
+     cy.get(':nth-child(3) > .list-row > .level-left > :nth-child(4) > .indicator-pill').click()
+     cy.get(':nth-child(4) > .list-row > .level-left > .list-subject > .bold > .ellipsis').click(); // change the nth child number for fetching expected quotaion () 
+     cy.get('#quotation-more_info_tab-tab').click();
+
+     //Enter rejection message dynamically from test data
+    const rejectionMessage = getValueByField('Message', this.testData);
+    if (rejectionMessage) {
+      cy.get(':nth-child(5) > .section-body > :nth-child(2) > form > div[data-fieldtype="Small Text"] > .form-group > .control-input-wrapper > .control-input > .input-with-feedback')
+        .click()
+        .type(rejectionMessage, { force: true }); // Type the rejection message
+    } else {
+      throw new Error('Rejection message not found in the provided test data');
+    }
+      
+    //Submit buttons 
+       cy.get('#page-Quotation > .page-head > .container > .row > .col > .standard-actions > .primary-action').click();
+       cy.get('#page-Quotation > .page-head > .container > .row > .col > .standard-actions > .actions-btn-group > .btn').click();
+       cy.wait(4000);
+       cy.get('#page-Quotation > .page-head > .container > .row > .col > .standard-actions > .actions-btn-group > .dropdown-menu > :nth-child(1) > .grey-link').click()
+  });
+});
