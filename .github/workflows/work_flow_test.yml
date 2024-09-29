@@ -40,9 +40,6 @@ jobs:
           npm add @cypress/code-coverage
           npm add cypress-file-upload
 
-      - name: Cypress Package Initialization
-        run: npx cypress init
-
       - name: Run Cypress Tests
         env:
           USER_NAME: ${{ secrets.USER_NAME }}  # Set your GitHub secrets for username and password
